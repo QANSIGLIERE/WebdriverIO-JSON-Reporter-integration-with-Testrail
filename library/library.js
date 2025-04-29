@@ -1,17 +1,23 @@
 var { TestRail_API } = require('qansigliere-testrail-api-integration');
+const fs = require('fs');
+const path = require('path');
 
 function extractTestCaseIDs(fullTitle) {
     return Array.from(fullTitle.matchAll(/C\d+/g), m => m[0]);
 }
 
-function parseMochawesomeReport(pathToJSONReport) {
-    let mochawesomeReport = require(pathToJSONReport);
+function parseJSONReporterFolder(pathToFolder) {
+    let files = fs.readdirSync(__dirname + pathToFolder).filter(function (file) {
+        return path.extname(file) == '.json';
+    });
     let results = [];
 
-    for (let result of mochawesomeReport.results) {
-        for (let suite of result.suites) {
+    for (let jsonFile of files) {
+        let data = require(__dirname + pathToFolder + jsonFile);
+
+        for (let suite of data.suites) {
             for (let testCase of suite.tests) {
-                for (let testCaseResult of extractTestCaseIDs(testCase.fullTitle)) {
+                for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
                     results.push({
                         id: testCaseResult.replace('C', ''),
                         state: testCase.state,
@@ -65,7 +71,7 @@ async function syncResultsToTestrail(reportResults, url, username, apiKey, proje
         resultsJSON.push({
             test_id: testRunTests.filter(x => x.case_id == testCaseResult.id)[0].id,
             status_id: testCaseResult.state == 'passed' ? 1 : 5,
-            comment: testCaseResult.err,
+            comment: testCaseResult.err ? testCaseResult.err : '',
         });
     }
 
@@ -79,7 +85,7 @@ async function syncResultsToTestrail(reportResults, url, username, apiKey, proje
 }
 
 async function parseJSONReporterAndSyncResultsToTestrail(
-    pathToJSONReport,
+    pathToFolderWithJSONResults,
     url,
     username,
     apiKey,
@@ -88,16 +94,16 @@ async function parseJSONReporterAndSyncResultsToTestrail(
     testRunID,
     testRunName,
 ) {
-    if (pathToJSONReport && url && username && apiKey && projectID && suiteID) {
+    if (pathToFolderWithJSONResults && url && username && apiKey && projectID && suiteID) {
         // Parse Mochawesome report
-        let reportResults = parseMochawesomeReport(pathToJSONReport);
+        let reportResults = parseJSONReporterFolder(pathToFolderWithJSONResults);
 
         // Testrail Integration
         await syncResultsToTestrail(reportResults, url, username, apiKey, projectID, suiteID, testRunID, testRunName);
     } else {
         console.log(`
 One of the following parameters is missing:
-Path to the merged-report.json: ${pathToJSONReport}
+Path to the folder with JSON results: ${pathToFolderWithJSONResults}
 URL: ${url}
 Username: ${username}
 API Key: ${apiKey}
