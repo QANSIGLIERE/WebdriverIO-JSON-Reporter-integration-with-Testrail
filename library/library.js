@@ -1,6 +1,7 @@
 var { TestRail_API } = require('qansigliere-testrail-api-integration');
 const fs = require('fs');
 const path = require('path');
+var { createFileFromString } = require('qansigliere-fs-utils');
 
 function extractTestCaseIDs(fullTitle) {
     return Array.from(fullTitle.matchAll(/C\d+/g), m => m[0]);
@@ -21,7 +22,7 @@ function parseJSONReporterFolder(pathToFolder) {
                     results.push({
                         id: testCaseResult.replace('C', ''),
                         state: testCase.state,
-                        err: JSON.stringify(testCase.err),
+                        err: testCase.error ? testCase.error.stack : '',
                     });
                 }
             }
@@ -29,6 +30,32 @@ function parseJSONReporterFolder(pathToFolder) {
     }
 
     return results;
+}
+
+function parseJSONReporterFolderAndGenerateCSVFile(pathToFolder) {
+    let files = fs.readdirSync(__dirname + pathToFolder).filter(function (file) {
+        return path.extname(file) == '.json';
+    });
+
+    let csvReport = 'SPEC FILE; TEST CASE ID; STATUS; ERROR MESSAGE;\n';
+
+    for (let jsonFile of files) {
+        let data = require(__dirname + pathToFolder + jsonFile);
+
+        let newLine = `${data.specs};;;;\n`;
+        for (let suite of data.suites) {
+            for (let testCase of suite.tests) {
+                for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
+                    csvReport += `${data.specs};${testCaseResult.replace('C', '')};${testCase.state};${JSON.stringify(
+                        testCase.error.stack,
+                    )};\n`;
+                }
+            }
+        }
+        csvReport += newLine;
+    }
+
+    return createFileFromString(__dirname + pathToFolder + '/results.csv', csvReport);
 }
 
 async function syncResultsToTestrail(reportResults, url, username, apiKey, projectID, suiteID, testRunID, testRunName) {
@@ -71,7 +98,7 @@ async function syncResultsToTestrail(reportResults, url, username, apiKey, proje
         resultsJSON.push({
             test_id: testRunTests.filter(x => x.case_id == testCaseResult.id)[0].id,
             status_id: testCaseResult.state == 'passed' ? 1 : 5,
-            comment: testCaseResult.err ? testCaseResult.err : '',
+            comment: testCaseResult.err,
         });
     }
 
@@ -112,4 +139,5 @@ Suite ID: ${suiteID}`);
     }
 }
 
+module.exports.parseJSONReporterFolderAndGenerateCSVFile = parseJSONReporterFolderAndGenerateCSVFile;
 module.exports.parseJSONReporterAndSyncResultsToTestrail = parseJSONReporterAndSyncResultsToTestrail;

@@ -1,6 +1,6 @@
 {
   "name": "qansigliere-json-reporter-integration-with-testrail",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "The main idea of ​​this library created in the JavaScript language is to provide a better way to synchronize json-reporter results with Testrail.",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "report",
     "qansigliere",
     "webdriver",
-    "wdio", 
+    "wdio",
     "wdio-reporter",
     "json"
   ],
@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/QANSIGLIERE/WebdriverIO-JSON-Reporter-integration-with-Testrail#readme",
   "dependencies": {
+    "qansigliere-fs-utils": "^0.2.0",
     "qansigliere-testrail-api-integration": "^1.2.0"
   },
   "devDependencies": {
