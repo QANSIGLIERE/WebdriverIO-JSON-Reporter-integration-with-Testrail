@@ -40,7 +40,7 @@ let { parseJSONReporterAndSyncResultsToTestrail } = require('qansigliere-json-re
 
 (async function Integration() {
     await parseJSONReporterAndSyncResultsToTestrail(
-        '../JSONReporterFolder/', // path to the folder with results
+        '/../json-reporter-results/', // path to the folder with results
         'syncer.testrail.io', // testrail url
         'demo@gmail.com', // testrail username
         'L.WAa1j0Pb6s.D9u676J-/j6TYWBS5wIArzS5j1No', // testrail api key
