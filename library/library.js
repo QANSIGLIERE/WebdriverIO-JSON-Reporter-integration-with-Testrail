@@ -47,7 +47,7 @@ function parseJSONReporterFolderAndGenerateCSVFile(pathToFolder) {
             for (let testCase of suite.tests) {
                 for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
                     csvReport += `${data.specs};${testCaseResult.replace('C', '')};${testCase.state};${JSON.stringify(
-                        testCase.error.stack,
+                        testCase.error ? testCase.error.stack : '',
                     )};\n`;
                 }
             }
