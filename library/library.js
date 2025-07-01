@@ -14,18 +14,22 @@ function parseJSONReporterFolder(pathToFolder) {
     let results = [];
 
     for (let jsonFile of files) {
-        let data = require(__dirname + pathToFolder + jsonFile);
+        try {
+            let data = require(__dirname + pathToFolder + jsonFile);
 
-        for (let suite of data.suites) {
-            for (let testCase of suite.tests) {
-                for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
-                    results.push({
-                        id: testCaseResult.replace('C', ''),
-                        state: testCase.state,
-                        err: testCase.error ? testCase.error.stack : '',
-                    });
+            for (let suite of data.suites) {
+                for (let testCase of suite.tests) {
+                    for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
+                        results.push({
+                            id: testCaseResult.replace('C', ''),
+                            state: testCase.state,
+                            err: testCase.error ? testCase.error.stack : '',
+                        });
+                    }
                 }
             }
+        } catch {
+            console.log(`Warning: the file "${__dirname + pathToFolder + jsonFile}" is empty`);
         }
     }
 
