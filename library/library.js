@@ -44,19 +44,23 @@ function parseJSONReporterFolderAndGenerateCSVFile(pathToFolder) {
     let csvReport = 'SPEC FILE; TEST CASE ID; STATUS; ERROR MESSAGE;\n';
 
     for (let jsonFile of files) {
-        let data = require(__dirname + pathToFolder + jsonFile);
+        try {
+            let data = require(__dirname + pathToFolder + jsonFile);
 
-        let newLine = `${data.specs};;;;\n`;
-        for (let suite of data.suites) {
-            for (let testCase of suite.tests) {
-                for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
-                    csvReport += `${data.specs};${testCaseResult.replace('C', '')};${testCase.state};${JSON.stringify(
-                        testCase.error ? testCase.error.stack : '',
-                    )};\n`;
+            let newLine = `${data.specs};;;;\n`;
+            for (let suite of data.suites) {
+                for (let testCase of suite.tests) {
+                    for (let testCaseResult of extractTestCaseIDs(testCase.name)) {
+                        csvReport += `${data.specs};${testCaseResult.replace('C', '')};${
+                            testCase.state
+                        };${JSON.stringify(testCase.error ? testCase.error.stack : '')};\n`;
+                    }
                 }
             }
+            csvReport += newLine;
+        } catch {
+            console.log(`Warning: the file "${__dirname + pathToFolder + jsonFile}" is empty`);
         }
-        csvReport += newLine;
     }
 
     return createFileFromString(__dirname + pathToFolder + '/results.csv', csvReport);
